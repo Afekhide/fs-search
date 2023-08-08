@@ -3,10 +3,53 @@
 #include <string.h>
 #include <dirent.h>
 #include <unistd.h>
+#include "functions.h"
 #define IS_FILE 0
 #define IS_DIR 1
 #include <sys/stat.h>
 #define NULL 0
+
+void searchDir(char* directory, char* filename){
+    struct dirent *directory_entity;
+
+    DIR* dir = opendir(directory);
+
+    if(dir == NULL){
+        printf("Error opening directory: %s", directory);
+        exit(-1);
+    } else{
+        //printf("$> %s opened for access\n", directory);
+    }
+
+
+
+    while((directory_entity = readdir(dir)) != NULL){
+        char temp_filename[2056];
+        strcpy(temp_filename, directory);
+        strcat(temp_filename, "\\");
+        if(strcmp(directory_entity->d_name, "..") == 0) continue;
+        if(strcmp(directory_entity->d_name, ".") == 0) continue;
+
+        strcat(temp_filename, directory_entity->d_name);
+        if(isDir(temp_filename) == 1) {
+
+            //Recursively print search sub directories
+            searchDir(temp_filename, filename);
+        }
+
+        else {
+            //At this point we have a working file as temp_name
+            //So we perform the string comparisons to check if the given file is what we are after
+            char *_temp_filename = directory_entity->d_name;
+            strlwr(_temp_filename);
+            if (strcmp(filename, _temp_filename) == 0){
+                printf("%s found at: \t\t %s", filename,directory);
+            }
+        };
+
+    }
+}
+
 
 int isDir(char* path){
     struct stat s;
@@ -18,33 +61,18 @@ int isDir(char* path){
 
 
 int main(int argc, char **argv) {
-    char regex[] = {0};
     char filename[] = {0};
-    int USES_REGEX = 0;
     struct dirent *directory_entity;
-    char* base_dir = "C:\\Books\\";
-    DIR* dir = opendir(base_dir);
 
-    if(dir == NULL){
-        printf("Error opening bas directory: C:\\");
-        exit(-1);
-    } else{
-        printf("$> C:\\ opened for access\n");
-    }
 
 
     switch (argc){
         case 1:
-            printf("$> Correct Usages are\n: app.exe --regex <filename>\n\n: app.exe <filename>");
+            printf("$> Correct Usage is \n: app.exe <filename>");
             exit(-1);
         case 2:
-            strcpy(filename, argv[1]);
+            strcpy(filename, (strlwr(argv[1])));
             printf("$> Target file: %s\n", filename);
-            break;
-        case 3:
-            strcpy(regex, argv[2]);
-            //printf("Regex: %s", regex);
-            USES_REGEX = 1;
             break;
 
         default:
@@ -52,12 +80,6 @@ int main(int argc, char **argv) {
 
     }
 
-    //If target is an actual filename
-    if(!USES_REGEX){
-        while((directory_entity = readdir(dir)) != NULL){
-            printf("\n%s", strcat(base_dir, directory_entity->d_name));
-            //printf("\n%s    >>>   %d", strcat(base_dir,directory_entity->d_name), isDir(strcat(base_dir, directory_entity->d_name)));
-        }
-    }
+       searchDir("C:\\Books", filename);
     return 0;
 }

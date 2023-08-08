@@ -3,4 +3,6 @@
 //
 
 #pragma once
+void searchDir(char* directory, char* filename);
+int isDir(char* path);
 
